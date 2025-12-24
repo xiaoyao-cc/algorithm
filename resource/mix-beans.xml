@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+    <!-- 车：电动车 -->
+    <bean id="car" class="spring_framework.mix_inject.ElectricCar"/>
+
+    <!-- 人：必须有车，还给他起个昵称 -->
+    <bean id="driver" class="spring_framework.mix_inject.PersonDriver">
+        <constructor-arg ref="car"/>
+        <constructor-arg value="111" />
+    </bean>
+</beans>
