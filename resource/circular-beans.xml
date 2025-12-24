@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+    <bean id="a" class="spring_framework.circular_dependency.AImpl">
+        <property name="b" ref="b"/>
+    </bean>
+
+    <bean id="b" class="spring_framework.circular_dependency.BImpl">
+        <property name="a" ref="a"/>
+    </bean>
+</beans>

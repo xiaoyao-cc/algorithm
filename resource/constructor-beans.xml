@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+    <bean id="a" class="spring_framework.circular_dependency.impl.AImpl">
+        <constructor-arg ref="b" lazy="true"/>
+    </bean>
+
+    <bean id="b" class="spring_framework.circular_dependency.impl.BImpl">
+        <constructor-arg ref="a" lazy="true"/>
+    </bean>
+</beans>
