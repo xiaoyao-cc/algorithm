@@ -42,10 +42,7 @@ public class MiniIocContainer {
     public static MiniIocContainer getInstance() {
         return INSTANCE;
     }
-    // 新增公共方法，让用户手动注册切面
-    public void registerAspect(Aspect aspect) {
-        aspects.add(aspect);
-    }
+
 
     private MiniIocContainer(String xmlPath) throws Exception {
         //先用xml配置一遍
