@@ -16,7 +16,7 @@ public class SpringMain {
 
     private static void test5() throws Exception {
         MiniIocContainer container = MiniIocContainer.getInstance(); // 修改为你的路径
-        Driver driver = (Driver) container.getBean("driver");
+        Driver driver = (Driver) container.getBean("personDriver");
         driver.drive();
     }
 

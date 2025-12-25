@@ -4,16 +4,19 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import spring_framework.annotation.Autowired;
+import spring_framework.annotation.Component;
+import spring_framework.annotation.Value;
 import spring_framework.bean.BeanDefinition;
 import spring_framework.proxy.Aspect;
 import spring_framework.proxy.LazyInvocationHandler;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.io.File;
+import java.lang.reflect.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 
 public class MiniIocContainer {
@@ -47,6 +50,103 @@ public class MiniIocContainer {
     }
 
     private MiniIocContainer(String xmlPath) throws Exception {
+        //先用xml配置一遍
+        xmlConfiguration(xmlPath);
+        //再用注解配置一遍
+        annotationConfiguration("spring_framework");
+    }
+    private void performDependencyInjection() throws Exception {
+        for (BeanDefinition bd : beanDefs.values()) {
+            Class<?> clazz = Class.forName(bd.className);
+            Object instance = singletonBeans.get(bd.id);  // 已经创建的实例
+
+            if (instance == null) continue;
+
+            // 字段注入
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Autowired.class)) {
+                    field.setAccessible(true);  // 允许访问 private final
+                    String beanName = field.getAnnotation(Autowired.class).beanName();
+                    if (beanName.isEmpty()) {
+                        beanName = field.getType().getSimpleName();  // 默认用类型名首字母小写
+                        beanName = Character.toLowerCase(beanName.charAt(0)) + beanName.substring(1);
+                    }
+                    Object dependency = getBean(beanName);
+                    field.set(instance, dependency);
+                }
+                if(field.isAnnotationPresent(Value.class)){
+                    field.setAccessible(true);
+                    String value = field.getAnnotation(Value.class).value();
+                    //检查常量属性的数据类型 能否被允许放入,比如最基本的 定义的int属性,但注解却给了个abc,这种肯定是不行的
+                    Class<?> type = field.getType();
+                    try {
+                        if(type.equals(int.class) || type.equals(Integer.class)){
+                            field.set(instance, Integer.parseInt(value));  // 自动装箱
+                        }else if(type.equals(boolean.class) || type.equals(Boolean.class)){
+                            field.set(instance,Boolean.parseBoolean(value));
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("属性注入时出错: "+value+" 注入到: "+type.getTypeName());
+                    }
+                }
+            }
+        }
+    }
+    private void annotationConfiguration(String basePackage) throws Exception {
+        // 将包名转成路径
+        String packagePath = basePackage.replace('.', '/');
+
+        // 获取当前线程的类加载器（最常用）
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        URL url = classLoader.getResource(packagePath);
+        if (url == null) {
+            // 包不存在，直接返回
+            System.out.println("包不存在");
+            return;
+        }
+        // 只支持 file 协议（开发环境 target/classes）
+        if ("file".equals(url.getProtocol())) {
+            File dir = new File(url.toURI());
+            scanDirectory(dir, basePackage);
+        }
+        // 如果以后想支持 jar 包，可以在这里加 else 分支
+    }
+    private void scanDirectory(File dir, String packageName) throws Exception {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                // 递归扫描子包
+                scanDirectory(file, packageName + "." + file.getName());
+            } else if (file.getName().endsWith(".class")) {
+                // 转成全限定类名
+                String className = packageName + "." + file.getName().substring(0, file.getName().length() - 6);
+
+                Class<?> clazz = Class.forName(className);
+
+                // 检查是否标了 @Component
+                if (clazz.isAnnotationPresent(Component.class)) {
+                    Component component = clazz.getAnnotation(Component.class);
+                    String beanId = component.value();
+                    if (beanId.isEmpty()) {
+                        // 默认 id：类名首字母小写
+                        beanId = Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1);
+                    }
+
+                    // 创建 BeanDefinition 并注册
+                    BeanDefinition bd = new BeanDefinition();
+                    bd.id = beanId;
+                    bd.className = className;
+                    // 这里可以留空，因为注解方式通常依赖注入用构造函数或字段
+                    beanDefs.put(beanId, bd);
+
+                    System.out.println("扫描发现 @Component Bean: " + beanId + " -> " + className);
+                }
+            }
+        }
+    }
+    private void xmlConfiguration(String xmlPath) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = factory.newDocumentBuilder();
         Document doc = documentBuilder.parse(MiniIocContainer.class.getResourceAsStream(xmlPath));
@@ -238,6 +338,7 @@ public class MiniIocContainer {
             method.invoke(instance, refBean);
         }
         singletonBeans.put(id, instance);
+        performDependencyInjection();
         //清理环节
         creatingBeans.remove(id);
         earlyBeans.remove(id);

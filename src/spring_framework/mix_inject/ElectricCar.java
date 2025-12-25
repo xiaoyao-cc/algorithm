@@ -1,5 +1,9 @@
 package spring_framework.mix_inject;
 
+
+import spring_framework.annotation.Component;
+
+@Component
 public class ElectricCar implements Car{
     @Override
     public void start() {
