@@ -8,4 +8,8 @@
         <constructor-arg ref="car"/>
         <constructor-arg value="111" />
     </bean>
+    <aspects>
+        <aspect class="com.example.LogAspect"/>
+        <aspect class="com.example.TransactionAspect"/>
+    </aspects>
 </beans>
