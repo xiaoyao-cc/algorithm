@@ -2,7 +2,6 @@ package spring_framework.container;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import spring_framework.annotation.Autowired;
 import spring_framework.annotation.Component;
@@ -15,7 +14,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.lang.reflect.*;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
