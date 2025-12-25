@@ -2,6 +2,7 @@ package spring_framework.container;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import spring_framework.bean.BeanDefinition;
 import spring_framework.proxy.Aspect;
@@ -101,6 +102,20 @@ public class MiniIocContainer {
             }
             //保存到原型池
             beanDefs.put(beanDefinition.id, beanDefinition);
+        }
+        //解析切面代理
+        NodeList aspectsTag = root.getElementsByTagName("aspects");
+        if(aspectsTag .getLength() > 1){
+            throw new Exception("aspects标签在xml里面只能存在一个");
+        }
+        Element aspectsNode = (Element)aspectsTag.item(0);
+        NodeList aspect = aspectsNode.getElementsByTagName("aspect");
+        for(int i=0;i<aspect.getLength();i++){
+            Element aspectElement = (Element) aspect.item(i);
+            String classPath = aspectElement.getAttribute("class");
+            Class<?> clazz = Class.forName(classPath);
+            Object aspectBean = clazz.newInstance();
+            aspects.add((Aspect) aspectBean);
         }
     }
 

@@ -16,8 +16,6 @@ public class SpringMain {
 
     private static void test5() throws Exception {
         MiniIocContainer container = MiniIocContainer.getInstance(); // 修改为你的路径
-        //手动注册日志切面
-        container.registerAspect(new LogAspect());
         Driver driver = (Driver) container.getBean("driver");
         driver.drive();
     }

@@ -9,7 +9,6 @@
         <constructor-arg value="111" />
     </bean>
     <aspects>
-        <aspect class="com.example.LogAspect"/>
-        <aspect class="com.example.TransactionAspect"/>
+        <aspect class="spring_framework.proxy.LogAspect"/>
     </aspects>
 </beans>
