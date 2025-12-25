@@ -7,7 +7,7 @@ import java.lang.reflect.InvocationHandler;
 public class LogAspect implements Aspect{
     @Override
     public boolean matches(Class<?> beanClass) {
-        // 主动选择：所有实现了 Driver 接口的 Bean
+        // 目前这种写法只支持对Driver接口实现类的代理
         return Driver.class.isAssignableFrom(beanClass);
     }
 
